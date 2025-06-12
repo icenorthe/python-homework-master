@@ -1,0 +1,16 @@
+{
+  "face_data": {
+    "bin": "data/face_data/face.bin",
+    "npy":  "data/face_data/face_id.npy"
+  },
+  "product_data": {
+    "bin": "data/product_data/product.bin",
+    "npy": "data/product_data/product.npy"
+  },
+  "model_path": {
+    "product_model": "models/model_2"
+  },
+  "port": 5000,
+  "search_threshold": 0.6,
+  "face_threshold": 0.5
+}

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8">
+<head >
+    <title>人脸识别测试页</title>
+    <style>
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; }
+        .preview { width: 300px; margin: 10px 0; border: 2px dashed #ccc; }
+    </style>
+</head>
+<body >
+    <div class="container">
+        <h2>人脸识别测试</h2>
+        <input type="file" id="fileInput" accept="image/*">
+        <img id="preview" class="preview">
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const resultDiv = document.getElementById('result');
+
+        fileInput.onchange = async e => {
+            const file = e.target.files[0];
+            const imgURL = URL.createObjectURL(file);
+            preview.src = imgURL;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('http://localhost:5000/api/python/login', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if(data.status === 'success') {
+                    if(data.match) {
+                        resultDiv.innerHTML = `✅ 匹配成功：${data.username}`;
+                        resultDiv.style.color = 'green';
+                    } else {
+                        resultDiv.innerHTML = '❌ 未找到匹配用户';
+                        resultDiv.style.color = 'red';
+                    }
+                } else {
+                    resultDiv.innerHTML = `错误：${data.msg}`;
+                    resultDiv.style.color = 'orange';
+                }
+            } catch(error) {
+                resultDiv.innerHTML = '请求失败，请检查后端服务';
+                resultDiv.style.color = 'red';
+            }
+
+            URL.revokeObjectURL(imgURL);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+faiss-cpu
+numpy
+Pillow
+cmake
+dlib
+face-recognition
+transformers
+onnxruntime
+
+
+flask

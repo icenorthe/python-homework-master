@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>人脸识别登录系统</title>
+    <style>
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        input, button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .camera-container {
+            position: relative;
+            margin: 20px 0;
+            border-radius: 10px;
+            overflow: hidden;
+            min-height: 300px;
+            background: #000;
+            display: none;
+        }
+        video {
+            width: 100%;
+            transform: scaleX(-1);
+            display: none;
+        }
+        .camera-active {
+            animation: pulseBorder 2s infinite;
+        }
+        @keyframes pulseBorder {
+            0% { box-shadow: 0 0 10px rgba(0, 150, 255, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(0, 150, 255, 0.6); }
+            100% { box-shadow: 0 0 10px rgba(0, 150, 255, 0.3); }
+        }
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            flex-direction: column;
+        }
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status-text {
+            text-align: center;
+            color: #666;
+            margin: 10px 0;
+            min-height: 20px;
+        }
+        .switch-form {
+            color: #007bff;
+            cursor: pointer;
+            text-align: center;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="login-form">
+            <h2>登录</h2>
+            <input type="text" id="login-username" placeholder="用户名">
+            <input type="password" id="login-password" placeholder="密码">
+            <button onclick="handleLogin()">密码登录</button>
+            <button onclick="startFaceLogin()">人脸识别登录</button>
+
+            <div class="camera-container" id="login-camera">
+                <div class="loading-overlay" id="login-camera-loading">
+                    <div class="loading-spinner"></div>
+                    <p>正在启动摄像头...</p>
+                </div>
+                <video id="login-video" autoplay></video>
+            </div>
+            <p class="status-text" id="login-camera-status">摄像头未激活</p>
+            <button id="login-capture-btn" onclick="captureLoginFace()" disabled style="display:none;">验证人脸</button>
+
+            <div class="switch-form" onclick="showRegister()">没有账号？立即注册</div>
+        </div>
+
+        <div id="register-form" style="display:none;">
+            <h2>注册</h2>
+            <input type="text" id="reg-username" placeholder="用户名">
+            <input type="password" id="reg-password" placeholder="密码">
+
+            <div class="camera-container" id="register-camera">
+                <div class="loading-overlay" id="register-camera-loading">
+                    <div class="loading-spinner"></div>
+                    <p>正在启动摄像头...</p>
+                </div>
+                <video id="register-video" autoplay></video>
+            </div>
+            <p class="status-text" id="register-camera-status">摄像头未激活</p>
+            <button id="register-capture-btn" onclick="captureRegisterFace()" disabled>拍摄人脸</button>
+            <button onclick="handleRegister()">提交注册</button>
+            <div class="switch-form" onclick="showLogin()">已有账号？立即登录</div>
+        </div>
+    </div>
+
+    <script>
+        let videoStream = null;
+
+        // 摄像头管理
+        async function initCamera(videoId, loadingId, statusId, captureBtnId) {
+            try {
+                const video = document.getElementById(videoId);
+                const loading = document.getElementById(loadingId);
+                const status = document.getElementById(statusId);
+
+                video.parentElement.style.display = 'block';
+                loading.style.display = 'flex';
+                status.textContent = '正在请求摄像头权限...';
+
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480, facingMode: 'user' }
+                });
+
+                video.srcObject = videoStream;
+                video.style.display = 'block';
+                video.parentElement.classList.add('camera-active');
+
+                status.textContent = '摄像头运行中 ✔';
+                status.style.color = '#28a745';
+                document.getElementById(captureBtnId).disabled = false;
+
+                video.onloadedmetadata = () => {
+                    loading.style.display = 'none';
+                    video.play();
+                };
+
+                return true;
+
+            } catch (err) {
+                console.error('摄像头错误:', err);
+                const status = document.getElementById(statusId);
+                status.textContent = '无法访问摄像头 ❌';
+                status.style.color = '#dc3545';
+
+                if (err.name === 'NotAllowedError') {
+                    status.textContent += ' (请允许摄像头权限)';
+                }
+
+                document.getElementById(loadingId).style.display = 'none';
+                document.getElementById(videoId).style.display = 'none';
+                document.getElementById(captureBtnId).disabled = true;
+                return false;
+            }
+        }
+
+        // 人脸识别登录
+        async function startFaceLogin() {
+            document.querySelectorAll('#login-form input, #login-form button')
+                .forEach(el => el.style.display = 'none');
+
+            const success = await initCamera(
+                'login-video',
+                'login-camera-loading',
+                'login-camera-status',
+                'login-capture-btn'
+            );
+
+            if (success) {
+                document.getElementById('login-capture-btn').style.display = 'block';
+            } else {
+                document.querySelectorAll('#login-form input, #login-form button')
+                    .forEach(el => el.style.display = 'block');
+            }
+        }
+
+        // 注册功能
+        async function handleRegister() {
+            const username = document.getElementById('reg-username').value;
+            const password = document.getElementById('reg-password').value;
+            const faceData = await captureFace('register-video');
+
+            if (!username || !password) {
+                alert('请填写用户名和密码');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        face_image: faceData.split(',')[1]
+                    })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    alert('注册成功！');
+                    showLogin();
+                } else {
+                    alert('注册失败: ' + result.msg);
+                }
+            } catch (error) {
+                console.error('注册请求失败:', error);
+                alert('网络请求失败');
+            }
+        }
+
+        // 人脸登录
+        async function captureLoginFace() {
+            const faceData = await captureFace('login-video');
+
+            try {
+                const response = await fetch('http://localhost:5000/face_login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        face_image: faceData.split(',')[1]
+                    })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    alert(`欢迎回来 ${result.username}！`);
+                    window.location.href = '/welcome';
+                } else {
+                    alert('登录失败: ' + result.msg);
+                }
+            } catch (error) {
+                console.error('登录请求失败:', error);
+                alert('网络请求失败');
+            }
+        }
+
+        // 通用功能
+        function captureFace(videoId) {
+            const video = document.getElementById(videoId);
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            return canvas.toDataURL('image/jpeg', 0.8);
+        }
+
+        function showRegister() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'block';
+            initCamera(
+                'register-video',
+                'register-camera-loading',
+                'register-camera-status',
+                'register-capture-btn'
+            );
+        }
+
+        function showLogin() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+            document.querySelectorAll('#login-form input, #login-form button')
+                .forEach(el => el.style.display = 'block');
+            document.getElementById('login-camera').style.display = 'none';
+            document.getElementById('login-capture-btn').style.display = 'none';
+        }
+
+        async function handleLogin() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await fetch('http://localhost:5000/password_login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    window.location.href = '/dashboard';
+                } else {
+                    alert('登录失败: ' + result.msg);
+                }
+            } catch (error) {
+                console.error('登录请求失败:', error);
+                alert('网络请求失败');
+            }
+        }
+    </script>
+</body>
+</html>

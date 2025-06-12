@@ -1,0 +1,46 @@
+{
+    "success": true,
+    "code": 200,
+    "message": "商品列表获取成功",
+    "data": [
+        {
+            "productId": 3,
+            "userId": 1,
+            "title": "二手iPhone 13 Pro",
+            "price": 3999.99,
+            "description": "好得很",
+            "status": "available",
+            "createdAt": "2025-05-17T11:58:31.000+00:00",
+            "images": [
+                {
+                    "imageId": 12,
+                    "productId": 3,
+                    "imageUrl": "/uploads/4abfdc62-4e3a-402b-8ca0-27396af09816.jpg"
+                }
+            ]
+        },
+        {
+            "productId": 2,
+            "userId": 1,
+            "title": "二手手机",
+            "price": 999.99,
+            "description": "99新",
+            "status": "available",
+            "createdAt": "2025-05-17T11:19:59.000+00:00",
+            "images": [
+                {
+                    "imageId": 3,
+                    "productId": 2,
+                    "imageUrl": "/uploads/4abfdc62-4e3a-402b-8ca0-27396af09816.jpg"
+                }
+            ]
+        }
+    ],
+    "timestamp": 1749460653935,
+    "requestId": null,
+    "path": null
+}
+
+
+
+

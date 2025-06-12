@@ -1,0 +1,94 @@
+your_flask_project/
+├── app/                         # 主应用包
+│   ├── __init__.py              # 创建 Flask 应用、注册蓝图
+│
+│   ├── routes/                  # 路由层（类似 Controller）
+│   │   ├── __init__.py
+│   │   └── auth.py              # 登录/注册接口
+│   │   └── user.py              # 用户相关接口
+│
+│   ├── services/                # 业务逻辑层（类似 Service）
+│   │   ├── __init__.py
+│   │   └── auth_service.py
+│   │   └── user_service.py
+│
+│   ├── dao/                     # 数据访问层（类似 Mapper）
+│   │   ├── __init__.py
+│   │   └── user_dao.py
+│
+│   ├── models/                  # ORM模型类（类似 Entity）
+│   │   ├── __init__.py
+│   │   └── user.py
+│
+│   ├── dto/                     # 数据传输对象（类似 Dto）
+│   │   ├── __init__.py
+│   │   └── login_dto.py
+│   │   └── register_dto.py
+│
+│   ├── common/                  # 公共工具/封装（响应格式、异常、工具函数）
+│   │   ├── __init__.py
+│   │   └── base_response.py
+│   │   └── encryption.py        # 密码加密/验证
+│   │   └── utils.py             # 通用函数
+│
+│   ├── config/                  # 配置文件（可按环境分）
+│   │   ├── __init__.py
+│   │   └── default.py
+│   │   └── dev.py
+│   │   └── prod.py
+│
+│   └── extensions.py            # 初始化扩展（数据库、JWT等）
+│
+├── migrations/                  # 数据库迁移脚本（可选）
+│
+├── run.py                       # 项目启动入口
+├── requirements.txt             # 项目依赖
+├── README.md
+
+
+
+
+
+
+{
+    "code": 200,
+    "data": "商品列表获取成功",
+    "message": [
+        {
+            "created_at": "2025-05-17T19:58:31",
+            "description": "好得很",
+            "images": [
+                {
+                    "image_id": 12,
+                    "image_url": "/uploads/4abfdc62-4e3a-402b-8ca0-27396af09816.jpg",
+                    "product_id": 3
+                }
+            ],
+            "price": "3999.99",
+            "product_id": 3,
+            "status": "available",
+            "title": "二手iPhone 13 Pro",
+            "user_id": 1
+        },
+        {
+            "created_at": "2025-05-17T19:19:59",
+            "description": "99新",
+            "images": [
+                {
+                    "image_id": 3,
+                    "image_url": "/uploads/4abfdc62-4e3a-402b-8ca0-27396af09816.jpg",
+                    "product_id": 2
+                }
+            ],
+            "price": "999.99",
+            "product_id": 2,
+            "status": "available",
+            "title": "二手手机",
+            "user_id": 1
+        }
+    ],
+    "path": "/api/products",
+    "requestId": null,
+    "success": true,
+    "timestamp": 1749461566045
+}
